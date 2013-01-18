@@ -33,10 +33,10 @@ main (void)
 
 	for (;;)
 	{
+		memset(buf, 0, sizeof(buf));
 		recvfrom(sockfd, buf, MAXBUFLEN-1, 0, (struct sockaddr *)&recv_addr, &recv_addr_len);
 
 		printf("%s\n", buf);
-		memset(buf, 0, sizeof(buf));
 	}
 
 	freeaddrinfo(res);
