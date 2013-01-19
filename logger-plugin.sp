@@ -15,6 +15,7 @@ public Plugin:myinfo =
 }
 
 new bool:isRealRoundEnd = false;
+new bool:isSaferoomEnd = false;
 new String:mapName[64];
 new Handle:gSocket;
 
@@ -35,9 +36,10 @@ public OnMapStart()
 	GetCurrentMap(mapName, sizeof(mapName));
 }
 
-PrepRealRoundEnd()
+PrepRealRoundEnd(bool:saferoom = false)
 {
 	isRealRoundEnd = true;
+	isSaferoomEnd = saferoom;
 	CreateTimer(ENDCHECKDELAY, PossibleEndTimer, TIMER_FLAG_NO_MAPCHANGE);
 }
 
@@ -53,6 +55,7 @@ public OnSocketDisconnect(Handle:socket, any:arg) { }
 public Action:PossibleEndTimer(Handle:timer)
 {
 	isRealRoundEnd = false;
+	isSaferoomEnd = false;
 }
 
 public Action:RoundEnd_Event(Handle:event, const String:name[], bool:dontBroadcast)
@@ -61,7 +64,7 @@ public Action:RoundEnd_Event(Handle:event, const String:name[], bool:dontBroadca
 	{
 		new String:message[100], String:configName[50];
 		GetConVarString(FindConVar("l4d_ready_cfg_name"), configName, sizeof(configName));
-		Format(message, sizeof(message), "%s,%s,%d", mapName, configName, GetSurvivorCount());
+		Format(message, sizeof(message), "%s,%s,%d", mapName, configName, isSaferoomEnd ? GetAliveSurvivorCount() : GetStandingSurvivorCount());
 		SocketSend(gSocket, message, -1);
 	}
 }
@@ -70,14 +73,14 @@ public Action:DoorClose_Event(Handle:event, const String:name[], bool:dontBroadc
 {
 	if (GetEventBool(event, "checkpoint"))
 	{
-		PrepRealRoundEnd();
+		PrepRealRoundEnd(true);
 	}
 }
 
 public Action:PlayerDeath_Event(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
-	if (client && IsSurvivor(client) && GetSurvivorCount() == 0)
+	if (client && IsSurvivor(client) && GetAliveSurvivorCount() == 0)
 	{
 		PrepRealRoundEnd();
 	}
@@ -86,7 +89,7 @@ public Action:PlayerDeath_Event(Handle:event, const String:name[], bool:dontBroa
 public Action:PlayerIncap_Event(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
-	if (client && IsSurvivor(client) && GetSurvivorCount() == 0)
+	if (client && IsSurvivor(client) && GetStandingSurvivorCount() == 0)
 	{
 		PrepRealRoundEnd();
 	}
@@ -97,18 +100,27 @@ public Action:VehicleLeaving_Event(Handle:event, const String:name[], bool:dontB
 	PrepRealRoundEnd();
 }
 
-stock IsSurvivor(client)
-{
-	return IsClientInGame(client) && GetClientTeam(client) == 2;
-}
-
-stock GetSurvivorCount()
+stock GetAliveSurvivorCount()
 {
 	new survCount = 0;
 
 	for (new i = 1; i < MaxClients; i++)
 	{
-		if (IsSurvivor(i)) survCount++;
+		if (IsSurvivor(i) && IsPlayerAlive(i)) survCount++;
 	}
 	return survCount;
 }
+
+stock GetStandingSurvivorCount()
+{
+	new survCount = 0;
+
+	for (new i = 1; i < MaxClients; i++)
+	{
+		if (IsSurvivor(i) && !IsIncapacitated(i)) survCount++;
+	}
+	return survCount;
+}
+
+stock bool:IsSurvivor(client) return IsClientInGame(client) && GetClientTeam(client) == 2;
+stock bool:IsIncapacitated(client) return bool:GetEntProp(client, Prop_Send, "m_isIncapacitated");
