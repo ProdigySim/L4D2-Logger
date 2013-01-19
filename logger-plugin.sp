@@ -80,7 +80,7 @@ public Action:DoorClose_Event(Handle:event, const String:name[], bool:dontBroadc
 public Action:PlayerDeath_Event(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
-	if (client && IsSurvivor(client) && GetAliveSurvivorCount() == 0)
+	if (client && IsSurvivor(client) && GetStandingSurvivorCount() == 0)
 	{
 		PrepRealRoundEnd();
 	}
@@ -117,7 +117,7 @@ stock GetStandingSurvivorCount()
 
 	for (new i = 1; i < MaxClients; i++)
 	{
-		if (IsSurvivor(i) && !IsIncapacitated(i)) survCount++;
+		if (IsSurvivor(i) && IsPlayerAlive(i) && !IsIncapacitated(i)) survCount++;
 	}
 	return survCount;
 }
