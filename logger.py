@@ -19,6 +19,6 @@ serversocket.bind(address)
 while 1:
 	data = serversocket.recv(128).decode('utf-8')
 	tokens = data.split(',')
-	c.execute('INSERT INTO test VALUES (?, ?, ?)', tokens)
+	c.execute('INSERT INTO log VALUES (?, ?, ?)', tokens)
 	db.commit()
 	print(tokens)
