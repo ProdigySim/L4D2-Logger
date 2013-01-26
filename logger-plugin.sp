@@ -66,6 +66,7 @@ public Action:RoundEnd_Event(Handle:event, const String:name[], bool:dontBroadca
 		GetConVarString(FindConVar("l4d_ready_cfg_name"), configName, sizeof(configName));
 		Format(message, sizeof(message), "%s,%s,%d", mapName, configName, isSaferoomEnd ? GetAliveSurvivorCount() : GetStandingSurvivorCount());
 		SocketSend(gSocket, message, -1);
+		isRealRoundEnd = false;
 	}
 }
 
