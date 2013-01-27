@@ -79,7 +79,7 @@ int main(int argc, const char *argv[])
 		printf("%d,%d,%d,%d,", survhealth[0], survhealth[1], survhealth[2], survhealth[3]);
 		printf("%d,%d\n", bossflow[0], bossflow[1]);
 
-		sprintf(query, "INSERT INTO log VALUES( %s, %s, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)", configname, mapname, alivesurvs, survcompletion[0], survcompletion[1], survcompletion[2], survcompletion[3], survhealth[0], survhealth[1], survhealth[2], survhealth[3], bossflow[0], bossflow[1]);
+		sprintf(query, "INSERT INTO log VALUES(\"%s\", \"%s\", %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)", configname, mapname, alivesurvs, survcompletion[0], survcompletion[1], survcompletion[2], survcompletion[3], survhealth[0], survhealth[1], survhealth[2], survhealth[3], bossflow[0], bossflow[1]);
 
 		sqlite3_prepare_v2(db, query, sizeof(query), &ppStmt, NULL);
 		sqlite3_step(ppStmt);
