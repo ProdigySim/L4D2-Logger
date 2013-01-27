@@ -13,7 +13,7 @@ public Plugin:myinfo =
 	name = "L4D2 Logger",
 	author = "CanadaRox",
 	description = "A plugin that logs the number of survivors that survive to a central server.  Collects map name, config name, and number of survivors that survived.",
-	version = "1",
+	version = "2",
 	url = "https://github.com/CanadaRox/L4D2-Logger"
 }
 
