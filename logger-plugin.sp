@@ -69,6 +69,7 @@ public Action:RoundEnd_Event(Handle:event, const String:name[], bool:dontBroadca
 		new length = PrepMessage(message);
 
 		SocketSend(gSocket, message, length);
+		isRealRoundEnd = false;
 	}
 }
 
