@@ -13,6 +13,8 @@
 #define PORT "55555"
 #define MAXBUFLEN 512
 
+void protocol3(char *cursor, char *query, int len);
+
 int main(int argc, const char *argv[])
 {
 	struct addrinfo hints, *res;
@@ -21,8 +23,7 @@ int main(int argc, const char *argv[])
 	int sockfd, recv_addr_len;
 	char *cursor;
 
-	char configname[32], mapname[32];
-	int alivesurvs, survcompletion[4], survhealth[4], bossflow[2];
+	int protocol;
 
 	sqlite3 *db;
 	int rc;
@@ -61,25 +62,17 @@ int main(int argc, const char *argv[])
 		recvfrom(sockfd, buf, MAXBUFLEN-1, 0, (struct sockaddr *)&recv_addr,
 				&recv_addr_len);
 
-		strcpy(configname, cursor);
-		cursor += 1 + strlen(cursor);
-		strcpy(mapname, cursor);
-		cursor += 1 + strlen(cursor);
-		memcpy(&alivesurvs, cursor, 4);
-		cursor += 4;
-		memcpy(survcompletion, cursor, 16);
-		cursor += 16;
-		memcpy(survhealth, cursor, 16);
-		cursor += 16;
-		memcpy(bossflow, cursor, 8);
-		cursor += 16;
+		memcpy(&protocol, cursor, 1);
+		cursor += 1;
 
-		printf("%s,%s,", configname, mapname);
-		printf("%d,%d,%d,%d,%d,", alivesurvs, survcompletion[0], survcompletion[1], survcompletion[2], survcompletion[3]);
-		printf("%d,%d,%d,%d,", survhealth[0], survhealth[1], survhealth[2], survhealth[3]);
-		printf("%d,%d\n", bossflow[0], bossflow[1]);
-
-		sprintf(query, "INSERT INTO log VALUES(\"%s\", \"%s\", %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)", configname, mapname, alivesurvs, survcompletion[0], survcompletion[1], survcompletion[2], survcompletion[3], survhealth[0], survhealth[1], survhealth[2], survhealth[3], bossflow[0], bossflow[1]);
+		switch (protocol)
+		{
+			case (3):
+				protocol3(cursor, query, sizeof(query));
+				break;
+			default:
+				query[0] = '\0';
+		}
 
 		sqlite3_prepare_v2(db, query, sizeof(query), &ppStmt, NULL);
 		sqlite3_step(ppStmt);
@@ -90,4 +83,25 @@ int main(int argc, const char *argv[])
 	freeaddrinfo(res);
 	close(sockfd);
 	exit(0);
+}
+
+void protocol3(char *cursor, char *query, int len)
+{
+	char configname[32], mapname[32];
+	int alivesurvs, survcompletion[4], survhealth[4], bossflow[2];
+
+	strcpy(configname, cursor);
+	cursor += 1 + strlen(cursor);
+	strcpy(mapname, cursor);
+	cursor += 1 + strlen(cursor);
+	memcpy(&alivesurvs, cursor, 4);
+	cursor += 4;
+	memcpy(survcompletion, cursor, 16);
+	cursor += 16;
+	memcpy(survhealth, cursor, 16);
+	cursor += 16;
+	memcpy(bossflow, cursor, 8);
+	cursor += 16;
+
+	snprintf(query, len, "INSERT INTO log VALUES(\"%s\", \"%s\", %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d);", configname, mapname, alivesurvs, survcompletion[0], survcompletion[1], survcompletion[2], survcompletion[3], survhealth[0], survhealth[1], survhealth[2], survhealth[3], bossflow[0], bossflow[1]);
 }
