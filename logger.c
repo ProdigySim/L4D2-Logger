@@ -62,8 +62,8 @@ int main(int argc, const char *argv[])
 		recvfrom(sockfd, buf, MAXBUFLEN-1, 0, (struct sockaddr *)&recv_addr,
 				&recv_addr_len);
 
-		memcpy(&protocol, cursor, 1);
-		cursor += 1;
+		memcpy(&protocol, cursor, sizeof(int));
+		cursor += sizeof(int);
 
 		switch (protocol)
 		{
@@ -91,17 +91,17 @@ void protocol3(char *cursor, char *query, int len)
 	int alivesurvs, survcompletion[4], survhealth[4], bossflow[2];
 
 	strcpy(configname, cursor);
-	cursor += 1 + strlen(cursor);
+	cursor += sizeof(char) + strlen(cursor);
 	strcpy(mapname, cursor);
-	cursor += 1 + strlen(cursor);
-	memcpy(&alivesurvs, cursor, 4);
-	cursor += 4;
-	memcpy(survcompletion, cursor, 16);
-	cursor += 16;
-	memcpy(survhealth, cursor, 16);
-	cursor += 16;
-	memcpy(bossflow, cursor, 8);
-	cursor += 16;
+	cursor += sizeof(char) + strlen(cursor);
+	memcpy(&alivesurvs, cursor, sizeof(int));
+	cursor += sizeof(int);
+	memcpy(survcompletion, cursor, 4*sizeof(int));
+	cursor += 4*sizeof(int);
+	memcpy(survhealth, cursor, 4*sizeof(int));
+	cursor += 4*sizeof(int);
+	memcpy(bossflow, cursor, 4*sizeof(int));
+	cursor += 4*sizeof(int);
 
 	snprintf(query, len, "INSERT INTO log VALUES(\"%s\", \"%s\", %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d);", configname, mapname, alivesurvs, survcompletion[0], survcompletion[1], survcompletion[2], survcompletion[3], survhealth[0], survhealth[1], survhealth[2], survhealth[3], bossflow[0], bossflow[1]);
 }
