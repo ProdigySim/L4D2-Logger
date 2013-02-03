@@ -88,7 +88,7 @@ int main(int argc, const char *argv[])
 void protocol3(char *cursor, char *query, int len)
 {
 	char configname[32], mapname[32];
-	int alivesurvs, survcompletion[4], survhealth[4], bossflow[2];
+	int alivesurvs, maxdist, survcompletion[4], survhealth[4], bossflow[2];
 
 	strcpy(configname, cursor);
 	cursor += sizeof(char) + strlen(cursor);
@@ -96,6 +96,8 @@ void protocol3(char *cursor, char *query, int len)
 	cursor += sizeof(char) + strlen(cursor);
 	memcpy(&alivesurvs, cursor, sizeof(alivesurvs));
 	cursor += sizeof(alivesurvs);
+	memcpy(&maxdist, cursor, sizeof(maxdist));
+	cursor += sizeof(maxdist);
 	memcpy(survcompletion, cursor, 4*sizeof(survcompletion));
 	cursor += 4*sizeof(survcompletion);
 	memcpy(survhealth, cursor, 4*sizeof(survhealth));
@@ -103,5 +105,5 @@ void protocol3(char *cursor, char *query, int len)
 	memcpy(bossflow, cursor, 4*sizeof(bossflow));
 	cursor += 4*sizeof(bossflow);
 
-	snprintf(query, len, "INSERT INTO log VALUES(\"%s\", \"%s\", %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d);", configname, mapname, alivesurvs, survcompletion[0], survcompletion[1], survcompletion[2], survcompletion[3], survhealth[0], survhealth[1], survhealth[2], survhealth[3], bossflow[0], bossflow[1]);
+	snprintf(query, len, "INSERT INTO log VALUES(\"%s\", \"%s\", %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d);", configname, mapname, alivesurvs, maxdist, survcompletion[0], survcompletion[1], survcompletion[2], survcompletion[3], survhealth[0], survhealth[1], survhealth[2], survhealth[3], bossflow[0], bossflow[1]);
 }
