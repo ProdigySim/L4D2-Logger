@@ -68,12 +68,18 @@ public OnSocketDisconnect(Handle:socket, any:arg) { }
 
 public RoundStart_Event(Handle:event, const String:name[], bool:dontBroadcas)
 {
+	CreateTimer(15.0, RoundStart_Delay);
+}
+
+public Action:RoundStart_Delay(Handle:timer)
+{
 	if (bossFlow[0] < 0)
 	{
-		bossFlow[0] = L4D2Direct_GetVSWitchToSpawnThisRound(0) ? RoundToNearest(100*(L4D2Direct_GetVSTankFlowPercent(0) - (Float:GetConVarInt(hVsBossBuffer) / L4D2Direct_GetMapMaxFlowDistance()))) : 0;
-		bossFlow[1] = L4D2Direct_GetVSTankToSpawnThisRound(0) ? RoundToNearest(100*(L4D2Direct_GetVSWitchFlowPercent(0) - (Float:GetConVarInt(hVsBossBuffer) / L4D2Direct_GetMapMaxFlowDistance()))) : 0;
+		bossFlow[0] = L4D2Direct_GetVSTankToSpawnThisRound(0) ? RoundToNearest(100*(L4D2Direct_GetVSWitchFlowPercent(0) - (Float:GetConVarInt(hVsBossBuffer) / L4D2Direct_GetMapMaxFlowDistance()))) : 0;
+		bossFlow[1] = L4D2Direct_GetVSWitchToSpawnThisRound(0) ? RoundToNearest(100*(L4D2Direct_GetVSTankFlowPercent(0) - (Float:GetConVarInt(hVsBossBuffer) / L4D2Direct_GetMapMaxFlowDistance()))) : 0;
 	}
 }
+
 public RoundEnd_Event(Handle:event, const String:name[], bool:dontBroadcast)
 {
 
