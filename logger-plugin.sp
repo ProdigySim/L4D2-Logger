@@ -22,7 +22,7 @@ public Plugin:myinfo =
 
 new String:mapName[64];
 new Handle:gSocket;
-new bossFlow[2] = { -1, ... };
+new bossFlow[2] = { -2, ... };
 
 /* cvars */
 new Handle:hVsBossBuffer;
@@ -53,8 +53,8 @@ public OnMapStart()
 
 public OnMapEnd()
 {
-	bossFlow[0] = -1;
-	bossFlow[1] = -1;
+	bossFlow[0] = -2;
+	bossFlow[1] = -2;
 }
 
 public OnSocketError(Handle:socket, const errorType, const errorNum, any:arg)
@@ -73,10 +73,10 @@ public RoundStart_Event(Handle:event, const String:name[], bool:dontBroadcas)
 
 public Action:RoundStart_Delay(Handle:timer)
 {
-	if (bossFlow[0] < 0)
+	if (bossFlow[0] == -2)
 	{
-		bossFlow[0] = L4D2Direct_GetVSTankToSpawnThisRound(0) ? RoundToNearest(100*(L4D2Direct_GetVSWitchFlowPercent(0) - (Float:GetConVarInt(hVsBossBuffer) / L4D2Direct_GetMapMaxFlowDistance()))) : 0;
-		bossFlow[1] = L4D2Direct_GetVSWitchToSpawnThisRound(0) ? RoundToNearest(100*(L4D2Direct_GetVSTankFlowPercent(0) - (Float:GetConVarInt(hVsBossBuffer) / L4D2Direct_GetMapMaxFlowDistance()))) : 0;
+		bossFlow[0] = L4D2Direct_GetVSTankToSpawnThisRound(0) ? RoundToNearest(100*(L4D2Direct_GetVSWitchFlowPercent(0) - (Float:GetConVarInt(hVsBossBuffer) / L4D2Direct_GetMapMaxFlowDistance()))) : -1;
+		bossFlow[1] = L4D2Direct_GetVSWitchToSpawnThisRound(0) ? RoundToNearest(100*(L4D2Direct_GetVSTankFlowPercent(0) - (Float:GetConVarInt(hVsBossBuffer) / L4D2Direct_GetMapMaxFlowDistance()))) : -1;
 	}
 }
 
