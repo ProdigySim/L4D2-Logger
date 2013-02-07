@@ -85,22 +85,24 @@ void prepare_query(char *cursor, char *query, int len)
 	char configname[32], mapname[32];
 	int alivesurvs, maxdist, survcompletion[4], survhealth[4], itemCount[3], bossflow[2];
 
-	strcpy(configname, cursor);
-	cursor += sizeof(char) + strlen(cursor);
+
 	strcpy(mapname, cursor);
+	cursor += sizeof(char) + strlen(cursor);
+	strcpy(configname, cursor);
 	cursor += sizeof(char) + strlen(cursor);
 	memcpy(&alivesurvs, cursor, sizeof(alivesurvs));
 	cursor += sizeof(alivesurvs);
 	memcpy(&maxdist, cursor, sizeof(maxdist));
 	cursor += sizeof(maxdist);
-	memcpy(survcompletion, cursor, 4*sizeof(survcompletion));
-	cursor += 4*sizeof(survcompletion);
-	memcpy(survhealth, cursor, 4*sizeof(survhealth));
-	cursor += 4*sizeof(survhealth);
-	memcpy(itemCount, cursor, 4*sizeof(itemCount));
-	cursor += 4*sizeof(survhealth);
-	memcpy(bossflow, cursor, 4*sizeof(bossflow));
-	cursor += 4*sizeof(bossflow);
+	memcpy(survcompletion, cursor, sizeof(survcompletion));
+	cursor += sizeof(survcompletion);
+	memcpy(survhealth, cursor, sizeof(survhealth));
+	cursor += sizeof(survhealth);
+	memcpy(itemCount, cursor, sizeof(itemCount));
+	cursor += sizeof(itemCount);
+	memcpy(bossflow, cursor, sizeof(bossflow));
+	cursor += sizeof(bossflow);
 
-	snprintf(query, len, "INSERT INTO log VALUES(\"%s\", \"%s\", %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d);", configname, mapname, alivesurvs, maxdist, survcompletion[0], survcompletion[1], survcompletion[2], survcompletion[3], survhealth[0], survhealth[1], survhealth[2], survhealth[3], itemCount[0], itemCount[1], itemCount[2], bossflow[0], bossflow[1]);
+	snprintf(query, len, "INSERT INTO log VALUES(\"%s\", \"%s\", %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d);", mapname, configname, alivesurvs, maxdist, survcompletion[0], survcompletion[1], survcompletion[2], survcompletion[3], survhealth[0], survhealth[1], survhealth[2], survhealth[3], itemCount[0], itemCount[1], itemCount[2], bossflow[0], bossflow[1]);
+	printf("%s\n\n", query);
 }
