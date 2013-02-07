@@ -8,8 +8,8 @@
 
 #define ENDCHECKDELAY 2.0
 #define BUFFERSIZE 512
-#define VERSION_INT 3
-#define VERSION_STR "3"
+#define VERSION_INT 4
+#define VERSION_STR "4"
 
 public Plugin:myinfo =
 {
@@ -22,13 +22,25 @@ public Plugin:myinfo =
 
 new String:mapName[64];
 new Handle:gSocket;
+new bossFlow[2] = { -1, ... };
+
+/* cvars */
 new Handle:hVsBossBuffer;
+new Handle:hPainPillDecayRate;
+new Handle:hReadyEnabled;
+new Handle:hCfgName;
+new Handle:hCheats;
 
 public OnPluginStart()
 {
+	HookEvent("round_start", RoundStart_Event);
 	HookEvent("round_end", RoundEnd_Event);
 
 	hVsBossBuffer = FindConVar("versus_boss_buffer");
+	hPainPillDecayRate = FindConVar("pain_pills_decay_rate");
+	hReadyEnabled = FindConVar("l4d_ready_enabled");
+	hCfgName = FindConVar("l4d_ready_cfg_name");
+	hCheats = FindConVar("sv_cheats");
 
 	gSocket = SocketCreate(SOCKET_UDP, OnSocketError);
 	SocketConnect(gSocket, OnSocketConnect, OnSocketRecv, OnSocketDisconnect, "bonerbox.canadarox.com", 55555);
@@ -37,6 +49,12 @@ public OnPluginStart()
 public OnMapStart()
 {
 	GetCurrentMap(mapName, sizeof(mapName));
+}
+
+public OnMapEnd()
+{
+	bossFlow[0] = -1;
+	bossFlow[1] = -1;
 }
 
 public OnSocketError(Handle:socket, const errorType, const errorNum, any:arg)
@@ -48,12 +66,20 @@ public OnSocketConnect(Handle:socket, any:arg) { }
 public OnSocketRecv(Handle:socket, const String:recvData[], const dataSize, any:arg) { }
 public OnSocketDisconnect(Handle:socket, any:arg) { }
 
-public Action:RoundEnd_Event(Handle:event, const String:name[], bool:dontBroadcast)
+public RoundStart_Event(Handle:event, const String:name[], bool:dontBroadcas)
+{
+	if (bossFlow[0] < 0)
+	{
+		bossFlow[0] = L4D2Direct_GetVSWitchToSpawnThisRound(0) ? RoundToNearest(100*(L4D2Direct_GetVSTankFlowPercent(0) - (Float:GetConVarInt(hVsBossBuffer) / L4D2Direct_GetMapMaxFlowDistance()))) : 0;
+		bossFlow[1] = L4D2Direct_GetVSTankToSpawnThisRound(0) ? RoundToNearest(100*(L4D2Direct_GetVSWitchFlowPercent(0) - (Float:GetConVarInt(hVsBossBuffer) / L4D2Direct_GetMapMaxFlowDistance()))) : 0;
+	}
+}
+public RoundEnd_Event(Handle:event, const String:name[], bool:dontBroadcast)
 {
 
 	if (GetEventInt(event, "reason") == 5
-			&& GetConVarBool(FindConVar("l4d_ready_enabled"))
-			&& !GetConVarBool(FindConVar("sv_cheats")))
+			&& GetConVarBool(hReadyEnabled)
+			&& !GetConVarBool(hCheats))
 	{
 		decl String:message[BUFFERSIZE];
 		new length = PrepMessage(message);
@@ -65,7 +91,7 @@ public Action:RoundEnd_Event(Handle:event, const String:name[], bool:dontBroadca
 PrepMessage(String:message[BUFFERSIZE])
 {
 	decl String:configName[50];
-	GetConVarString(FindConVar("l4d_ready_cfg_name"), configName, sizeof(configName));
+	GetConVarString(hCfgName, configName, sizeof(configName));
 
 	new aliveSurvs = GameRules_GetProp("m_iVersusSurvivalMultiplier", _, GameRules_GetProp("m_bAreTeamsFlipped"));
 
@@ -75,8 +101,8 @@ PrepMessage(String:message[BUFFERSIZE])
 	new survHealth[4] = { -1, ... };
 	GetPerSurvHealth(survHealth);
 
-	new bossFlow[2] = { -1, ... };
-	GetPerBossFlow(bossFlow);
+	new itemCount[3] = { 0, ... };
+	GetItemCount(itemCount);
 	
 	new offset;
 	offset += WriteToStringBuffer(message[offset], VERSION_INT); // 1 integer
@@ -86,6 +112,7 @@ PrepMessage(String:message[BUFFERSIZE])
 	offset += WriteToStringBuffer(message[offset], L4D_GetVersusMaxCompletionScore()); // 1 integer
 	offset += WriteArrayToStringBuffer(message[offset], survCompletion, sizeof(survCompletion)); // 4 integers
 	offset += WriteArrayToStringBuffer(message[offset], survHealth, sizeof(survHealth)); // 4 integers
+	offset += WriteArrayToStringBuffer(message[offset], itemCount, sizeof(itemCount)); // 3 integers
 	offset += WriteArrayToStringBuffer(message[offset], bossFlow, sizeof(bossFlow)); // 2 integers
 
 	return offset;
@@ -103,6 +130,34 @@ stock GetPerSurvFlows(survFlows[4])
 			survFlows[survCount] = GameRules_GetProp("m_iVersusDistancePerSurvivor", _, survCount + 4 * curTeam);
 			survFlows[survCount] = survFlows[survCount] & 0xff; /* bug work around y'all! */
 			survCount++;
+		}
+	}
+}
+
+stock GetItemCount(itemCount[3])
+{
+	decl tmp;
+	decl String:stmp[32];
+	for (new client = 1; client <= MaxClients; client++)
+	{
+		if(IsClientInGame(client) && IsSurvivor(client))
+		{
+			tmp = GetPlayerWeaponSlot(client, 3);
+			if (tmp > -1)
+			{
+				GetEdictClassname(tmp, stmp, sizeof(stmp));
+				if (StrEqual(stmp, "weapon_first_aid_kit"))
+					itemCount[0]++;
+			}
+			tmp = GetPlayerWeaponSlot(client, 4);
+			if (tmp > -1)
+			{
+				GetEdictClassname(tmp, stmp, sizeof(stmp));
+				if (StrEqual(stmp, "weapon_pain_pills"))
+					itemCount[1]++;
+				else if (StrEqual(stmp, "weapon_adrenaline"))
+					itemCount[2]++;
+			}
 		}
 	}
 }
@@ -138,12 +193,6 @@ stock GetPerSurvHealth(survHealth[4])
 	}
 }
 
-stock GetPerBossFlow(bossFlow[2])
-{
-	bossFlow[0] = RoundToNearest(100*(L4D2Direct_GetVSTankFlowPercent(0) - (Float:GetConVarInt(hVsBossBuffer) / L4D2Direct_GetMapMaxFlowDistance())));
-	bossFlow[1] = RoundToNearest(100*(L4D2Direct_GetVSWitchFlowPercent(0) - (Float:GetConVarInt(hVsBossBuffer) / L4D2Direct_GetMapMaxFlowDistance())));
-}
-
 stock WriteToStringBuffer(String:str[], any:num)
 {
 	str[0] = (_:num >>  0) & 0xff;
@@ -169,6 +218,6 @@ stock bool:IsIncapacitated(client) return bool:GetEntProp(client, Prop_Send, "m_
 stock GetSurvivorPermanentHealth(client) return GetEntProp(client, Prop_Send, "m_iHealth");
 stock GetSurvivorTempHealth(client)
 {
-	new temphp = RoundToCeil(GetEntPropFloat(client, Prop_Send, "m_healthBuffer") - ((GetGameTime() - GetEntPropFloat(client, Prop_Send, "m_healthBufferTime")) * GetConVarFloat(FindConVar("pain_pills_decay_rate")))) - 1;
+	new temphp = RoundToCeil(GetEntPropFloat(client, Prop_Send, "m_healthBuffer") - ((GetGameTime() - GetEntPropFloat(client, Prop_Send, "m_healthBufferTime")) * GetConVarFloat(hPainPillDecayRate))) - 1;
 	return (temphp > 0 ? temphp : 0);
 }

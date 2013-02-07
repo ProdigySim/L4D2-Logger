@@ -13,7 +13,7 @@
 #define PORT "55555"
 #define MAXBUFLEN 512
 
-void protocol3(char *cursor, char *query, int len);
+void prepare_query(char *cursor, char *query, int len);
 
 int main(int argc, const char *argv[])
 {
@@ -65,18 +65,13 @@ int main(int argc, const char *argv[])
 		memcpy(&protocol, cursor, sizeof(int));
 		cursor += sizeof(protocol);
 
-		switch (protocol)
+		if (protocol == 4)
 		{
-			case (3):
-				protocol3(cursor, query, sizeof(query));
-				break;
-			default:
-				query[0] = '\0';
+			prepare_query(cursor, query, sizeof(query));
+			sqlite3_prepare_v2(db, query, sizeof(query), &ppStmt, NULL);
+			sqlite3_step(ppStmt);
+			sqlite3_finalize(ppStmt);
 		}
-
-		sqlite3_prepare_v2(db, query, sizeof(query), &ppStmt, NULL);
-		sqlite3_step(ppStmt);
-		sqlite3_finalize(ppStmt);
 	}
 
 	sqlite3_close(db);
@@ -85,10 +80,10 @@ int main(int argc, const char *argv[])
 	exit(0);
 }
 
-void protocol3(char *cursor, char *query, int len)
+void prepare_query(char *cursor, char *query, int len)
 {
 	char configname[32], mapname[32];
-	int alivesurvs, maxdist, survcompletion[4], survhealth[4], bossflow[2];
+	int alivesurvs, maxdist, survcompletion[4], survhealth[4], itemCount[3], bossflow[2];
 
 	strcpy(configname, cursor);
 	cursor += sizeof(char) + strlen(cursor);
@@ -102,8 +97,10 @@ void protocol3(char *cursor, char *query, int len)
 	cursor += 4*sizeof(survcompletion);
 	memcpy(survhealth, cursor, 4*sizeof(survhealth));
 	cursor += 4*sizeof(survhealth);
+	memcpy(itemCount, cursor, 4*sizeof(itemCount));
+	cursor += 4*sizeof(survhealth);
 	memcpy(bossflow, cursor, 4*sizeof(bossflow));
 	cursor += 4*sizeof(bossflow);
 
-	snprintf(query, len, "INSERT INTO log VALUES(\"%s\", \"%s\", %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d);", configname, mapname, alivesurvs, maxdist, survcompletion[0], survcompletion[1], survcompletion[2], survcompletion[3], survhealth[0], survhealth[1], survhealth[2], survhealth[3], bossflow[0], bossflow[1]);
+	snprintf(query, len, "INSERT INTO log VALUES(\"%s\", \"%s\", %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d);", configname, mapname, alivesurvs, maxdist, survcompletion[0], survcompletion[1], survcompletion[2], survcompletion[3], survhealth[0], survhealth[1], survhealth[2], survhealth[3], itemCount[0], itemCount[1], itemCount[2], bossflow[0], bossflow[1]);
 }
