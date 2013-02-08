@@ -75,8 +75,8 @@ public Action:RoundStart_Delay(Handle:timer)
 {
 	if (bossFlow[0] == -2)
 	{
-		bossFlow[0] = L4D2Direct_GetVSTankToSpawnThisRound(0) ? RoundToNearest(100*(L4D2Direct_GetVSWitchFlowPercent(0) - (Float:GetConVarInt(hVsBossBuffer) / L4D2Direct_GetMapMaxFlowDistance()))) : -1;
-		bossFlow[1] = L4D2Direct_GetVSWitchToSpawnThisRound(0) ? RoundToNearest(100*(L4D2Direct_GetVSTankFlowPercent(0) - (Float:GetConVarInt(hVsBossBuffer) / L4D2Direct_GetMapMaxFlowDistance()))) : -1;
+		bossFlow[0] = L4D2Direct_GetVSTankToSpawnThisRound(0) ? RoundToNearest(100*(L4D2Direct_GetVSTankFlowPercent(0) - (Float:GetConVarInt(hVsBossBuffer) / L4D2Direct_GetMapMaxFlowDistance()))) : -1;
+		bossFlow[1] = L4D2Direct_GetVSWitchToSpawnThisRound(0) ? RoundToNearest(100*(L4D2Direct_GetVSWitchFlowPercent(0) - (Float:GetConVarInt(hVsBossBuffer) / L4D2Direct_GetMapMaxFlowDistance()))) : -1;
 	}
 }
 
