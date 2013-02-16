@@ -65,7 +65,7 @@ int main(int argc, const char *argv[])
 		memcpy(&protocol, cursor, sizeof(int));
 		cursor += sizeof(protocol);
 
-		if (protocol == 4)
+		if (protocol == 5)
 		{
 			prepare_query(cursor, query, sizeof(query));
 			sqlite3_prepare_v2(db, query, sizeof(query), &ppStmt, NULL);
@@ -83,8 +83,7 @@ int main(int argc, const char *argv[])
 void prepare_query(char *cursor, char *query, int len)
 {
 	char configname[32], mapname[32];
-	int alivesurvs, maxdist, survcompletion[4], survhealth[4], itemCount[3], bossflow[2];
-
+	int alivesurvs, maxdist, survcompletion[4], survhealth[4], itemCount[3], bossflow[2], roundtime;
 
 	strcpy(mapname, cursor);
 	cursor += sizeof(char) + strlen(cursor);
@@ -102,7 +101,9 @@ void prepare_query(char *cursor, char *query, int len)
 	cursor += sizeof(itemCount);
 	memcpy(bossflow, cursor, sizeof(bossflow));
 	cursor += sizeof(bossflow);
+	memcpy(&roundtime, cursor, sizeof(roundtime));
+	cursor += sizeof(roundtime);
 
-	snprintf(query, len, "INSERT INTO log VALUES(\"%s\", \"%s\", %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d);", mapname, configname, alivesurvs, maxdist, survcompletion[0], survcompletion[1], survcompletion[2], survcompletion[3], survhealth[0], survhealth[1], survhealth[2], survhealth[3], itemCount[0], itemCount[1], itemCount[2], bossflow[0], bossflow[1]);
+	snprintf(query, len, "INSERT INTO log VALUES(\"%s\", \"%s\", %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d);", mapname, configname, alivesurvs, maxdist, survcompletion[0], survcompletion[1], survcompletion[2], survcompletion[3], survhealth[0], survhealth[1], survhealth[2], survhealth[3], itemCount[0], itemCount[1], itemCount[2], bossflow[0], bossflow[1], roundtime);
 	printf("%s\n\n", query);
 }
