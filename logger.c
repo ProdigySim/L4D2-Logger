@@ -85,9 +85,9 @@ void prepare_query(char *cursor, char *query, int len)
 	char configname[32], mapname[32];
 	int alivesurvs, maxdist, survcompletion[4], survhealth[4], itemCount[3], bossflow[2], roundtime;
 
-	strcpy(mapname, cursor);
+	strncpy(mapname, cursor, sizeof(mapname));
 	cursor += sizeof(char) + strlen(cursor);
-	strcpy(configname, cursor);
+	strncpy(configname, cursor, sizeof(mapname));
 	cursor += sizeof(char) + strlen(cursor);
 	memcpy(&alivesurvs, cursor, sizeof(alivesurvs));
 	cursor += sizeof(alivesurvs);
